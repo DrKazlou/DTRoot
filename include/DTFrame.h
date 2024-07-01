@@ -56,10 +56,8 @@
 
 enum ETestCommandIdentifiers {
    M_FILE_OPEN,
+   M_FILE_SAVE_AMPL_TXT,
    M_FILE_SAVE_HISTO,
-   M_FILE_SAVE_TRACES,
-   M_FILE_PRINT,
-   M_FILE_PRINTSETUP,
    M_FILE_EXIT,
 
    M_OPT_MENU,	

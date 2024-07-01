@@ -21,8 +21,6 @@ using namespace std;
    
 char *buffer = NULL;
 		
-	
-    //uint32_t cal_thr[2];
 
 
 MainFrame::MainFrame(const TGWindow *p, UInt_t w, UInt_t h)
@@ -45,15 +43,17 @@ MainFrame::MainFrame(const TGWindow *p, UInt_t w, UInt_t h)
    fMenuBarLayout = new TGLayoutHints(kLHintsTop | kLHintsExpandX);
    fMenuBarItemLayout = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 4, 0, 0);
    fMenuBarHelpLayout = new TGLayoutHints(kLHintsTop | kLHintsRight);
-
-   fMenuFile = new TGPopupMenu(gClient->GetRoot());
-   fMenuFile->AddEntry("&Open...", M_FILE_OPEN);
-   fMenuFile->AddEntry("Save &histo", M_FILE_SAVE_HISTO);
-   fMenuFile->AddSeparator();
-   fMenuFile->AddEntry("E&xit", M_FILE_EXIT);
+	
+	fMenuFile = new TGPopupMenu(gClient->GetRoot());
+	fMenuFile->AddEntry("&Open...", M_FILE_OPEN);
+	fMenuFile->AddEntry("Save h_ampl &txt", M_FILE_SAVE_AMPL_TXT);
+	fMenuFile->AddEntry("Save &histo", M_FILE_SAVE_HISTO);
+	
+	fMenuFile->AddSeparator();
+	fMenuFile->AddEntry("E&xit", M_FILE_EXIT);
 	
 	fMenuFile->DisableEntry(M_FILE_OPEN);
-	fMenuFile->DisableEntry(M_FILE_SAVE_TRACES);
+	
    
    fMenuOpt = new TGPopupMenu(gClient->GetRoot());
    fMenuOpt->AddEntry("&Hist options", M_OPT_MENU);
@@ -543,30 +543,40 @@ void MainFrame::HandleMenu(Int_t id)
                             "ROOT macros",   "*.C",
                             "Text files",    "*.[tT][xX][tT]",
                             0,               0 };	
-
-   switch (id) {
-
-      case M_FILE_OPEN:
-         {
-            static TString dir(".");
-            TGFileInfo fi;
+	switch (id) {
+		
+		case M_FILE_OPEN:
+        	{
+          	static TString dir(".");
+          	TGFileInfo fi;
+          	fi.fFileTypes = filetypes;
+          	fi.fIniDir    = StrDup(dir);
+          	//printf("fIniDir = %s\n", fi.fIniDir);
+          	new TGFileDialog(gClient->GetRoot(), fMain, kFDOpen, &fi);
+          	printf("Open file: %s (dir: %s)\n", fi.fFilename, fi.fIniDir);
+         	dir = fi.fIniDir;
+        	}
+        	break;
+			
+      	case M_FILE_SAVE_AMPL_TXT:
+        	{
+           	static TString dir(".");
+        	TGFileInfo fi;
             fi.fFileTypes = filetypes;
-            fi.fIniDir    = StrDup(dir);
+           	fi.fIniDir    = StrDup(dir);
             //printf("fIniDir = %s\n", fi.fIniDir);
             new TGFileDialog(gClient->GetRoot(), fMain, kFDOpen, &fi);
-            printf("Open file: %s (dir: %s)\n", fi.fFilename, fi.fIniDir);
-            dir = fi.fIniDir;
-         }
-         break;
+			
+			FILE *outtxt = fopen(fi.fFilename,"RECREATE");	
+			for (int i = 0; i<Histo.ampl_set.xbins; i++)
+				fprintf(outtxt, "%i %f %f \n", i, Histo.ampl[0]->GetBinContent(i), Histo.ampl[1]->GetBinContent(i));
+				
+            printf("File saved as: %s (dir: %s)\n", fi.fFilename, fi.fIniDir);
+            }
+         	break;
 
-    case M_FILE_SAVE_HISTO:
-		{
-			const char *filetypes[] = { "All files",     "*",
-                            "ROOT files",    "*.root",
-                            "ROOT macros",   "*.C",
-                            "Text files",    "*.[tT][xX][tT]",
-                            0,               0 }; 
-			 
+   		case M_FILE_SAVE_HISTO:
+		{			 
 		 	static TString dir(".");
             TGFileInfo fi;
             fi.fFileTypes = filetypes;
@@ -586,10 +596,10 @@ void MainFrame::HandleMenu(Int_t id)
 			outfile->Write(); 
          	printf("File saved - %s \n",fi.fFilename);			 
 		 }
-        break;
+         break;
 	
-    case M_FILE_EXIT:
-        CloseWindow();   // terminate theApp no need to use SendCloseMessage()
+   	case M_FILE_EXIT:
+        CloseWindow();   
         break;
 	 
 	case M_OPT_MENU:
